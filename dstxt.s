@@ -59,12 +59,12 @@ _start:
 	mainloop:
 	;; --[ battery ]----------------
 	mov   edi, r13d
-	mov   edx, 3
+	mov   edx, battBuffLn
 	lea   rsi, [rsp + 16]
 	call  read
 	dec   eax
 	js    @f ;; 0 bytes read?
-	mov   byte [rsp + 16 + rax], 0
+	mov   byte [rsp + rax * 1 + 16], 0
 
 	@@:
 	mov   edi, r13d
@@ -145,6 +145,6 @@ section '.data'
 	           "Jul", 0, "Aug", 0, "Sep", 0, \
 	           "Oct", 0, "Nov", 0, "Dec", 0
 
-battBuffLn = 8
+battBuffLn = 4
 dateBuffLn = 32
 outBuffLn  = 128
