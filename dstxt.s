@@ -32,8 +32,6 @@ extrn _exit
 
 section '.text' executable
 _start:
-	mov   rbp, rsp
-
 	xor   edi, edi
 	call  XOpenDisplay
 	test  rax, rax
@@ -47,7 +45,7 @@ _start:
 	mov   r14, rsi
 
 	mov   edi, BATPATH
-	xor   esi, esi ;; O_RDONLY
+	xor   esi, esi
 	call  open
 	test  eax, eax
 	js    exit
@@ -69,7 +67,7 @@ _start:
 	@@:
 	mov   edi, r13d
 	xor   esi, esi
-	xor   edx, edx ;; SEEK_SET
+	xor   edx, edx
 	call  lseek
 
 	;; --[ time ]-------------------
@@ -80,34 +78,13 @@ _start:
 	call  localtime
 	mov   r11d, [rax + 4] ;; tm_min
 	cmp   r11d, r12d
-	je    @f
-
-	mov   r12d, r11d
-	movq  mm0, rbp
-
-	mov   r11d, [rax +  8] ;; tm_hour
-	mov   r10d, [rax + 12] ;; tm_mday
-	mov   ebx,  [rax + 16] ;; tm_mon
-	mov   ebp,  [rax + 24] ;; tm_wday
-
-	mov   dword [rsp + 0], r11d
-	mov   dword [rsp + 8], r12d
-
-	lea   rdi, [rsp + 16 + battBuffLn]
-	mov   esi, dateBuffLn
-	mov   rdx, timeFmt
-	mov   r8d, r10d
-	lea   rcx, [day + rbp * 4]
-	lea   r9,  [mon + rbx * 4]
-	movq  rbp, mm0
-	xor   eax, eax
-	call  snprintf
+	jne   buildtimebuff
 
 	;; -----------------------------
 	@@:
-	lea   rdi, [rsp + 16 + battBuffLn + dateBuffLn]
 	mov   esi, outBuffLn
 	mov   rdx, outFmt
+	lea   rdi, [rsp + 16 + battBuffLn + dateBuffLn]
 	lea   rcx, [rsp + 16]
 	lea   r8,  [rsp + 16 + battBuffLn]
 	xor   eax, eax
@@ -130,6 +107,27 @@ _start:
 	exit:
 	xor   edi, edi
 	call  _exit
+
+	buildtimebuff:
+	mov   r12d, r11d
+
+	mov   r11d, [rax +  8] ;; tm_hour
+	mov   r10d, [rax + 12] ;; tm_mday
+	mov   ebx,  [rax + 16] ;; tm_mon
+	mov   ebp,  [rax + 24] ;; tm_wday
+
+	mov   dword [rsp + 0], r11d
+	mov   dword [rsp + 8], r12d
+
+	mov   esi, dateBuffLn
+	mov   rdx, timeFmt
+	mov   r8d, r10d
+	lea   rdi, [rsp + 16 + battBuffLn]
+	lea   rcx, [day + rbp * 4]
+	lea   r9,  [mon + rbx * 4]
+	xor   eax, eax
+	call  snprintf
+	jmp   @b
 
 section '.data'
 	BATPATH db "/sys/class/power_supply/BAT0/capacity", 0
